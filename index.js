@@ -1,11 +1,23 @@
-import axios from "axios";
-import { parseTimestamp } from "./utils";
+'use strict';
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var axios = _interopDefault(require('axios'));
+
+function parseTimestamp(time) {
+  time = parseInt(time, 10);
+  const timestamp = new Date(time * 1000);
+  if (timestamp.toString() === "Invalid Date") {
+    throw TypeError(timestamp);
+  }
+  return timestamp;
+}
 
 const HN_API_ROOT = "https://hacker-news.firebaseio.com";
 const HN_API_VER = "v0";
 const FRONT_PAGE_COUNT = 30;
 
-export class HNApiClient {
+class HNApiClient {
   constructor() {
     this._axios = axios.create({
       baseURL: `${HN_API_ROOT}/${HN_API_VER}`
@@ -15,7 +27,7 @@ export class HNApiClient {
     return this._axios.get("/maxitem.json");
   }
   async item(id) {
-    const { data:item } = await this._axios.get(`item/${id}.json`);
+    const item = await this._axios.get(`item/${id}.json`);
     try {
       return Object.assign(item, {
         time: parseTimestamp(item.time)
@@ -25,9 +37,12 @@ export class HNApiClient {
     }
   }
   async topstories() {
-    const { data: topStoryIds } = await this._axios.get("/topstories.json");
+    const topStoryIds = await this._axios.get("/topstories.json");
     const storyIds = topStoryIds.slice(0, FRONT_PAGE_COUNT);
     const stories = await Promise.all(storyIds.map(id => this.item(id)));
     return stories;
   }
 }
+
+const client = new HNApiClient();
+client.topstories().then(console.log.bind(console));

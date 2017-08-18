@@ -1,11 +1,23 @@
-import axios from "axios";
-import { parseTimestamp } from "./utils";
+'use strict';
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var axios = _interopDefault(require('axios'));
+
+function parseTimestamp(time) {
+  time = parseInt(time, 10);
+  const timestamp = new Date(time * 1000);
+  if (timestamp.toString() === "Invalid Date") {
+    throw TypeError(timestamp);
+  }
+  return timestamp;
+}
 
 const HN_API_ROOT = "https://hacker-news.firebaseio.com";
 const HN_API_VER = "v0";
 const FRONT_PAGE_COUNT = 30;
 
-export class HNApiClient {
+class HNApiClient {
   constructor() {
     this._axios = axios.create({
       baseURL: `${HN_API_ROOT}/${HN_API_VER}`
@@ -31,3 +43,6 @@ export class HNApiClient {
     return stories;
   }
 }
+
+const client = new HNApiClient();
+client.topstories().then(console.log.bind(console));

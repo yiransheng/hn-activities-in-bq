@@ -2,7 +2,7 @@
   "name": "hn-activity",
   "version": "0.0.0",
   "description": "webtask fun",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "npm test",
     "build": "rollup -c",
@@ -17,5 +17,8 @@
     "rollup": "^0.47.6",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-node-resolve": "^3.0.0"
-  }
+  },
+  "files" : [
+    "dist"
+  ]
 }
