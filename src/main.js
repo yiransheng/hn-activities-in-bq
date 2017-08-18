@@ -14,7 +14,7 @@ async function task() {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: index
+      rank: index + 1
     };
   });
 

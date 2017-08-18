@@ -20,8 +20,8 @@ export function computeEntryFromStoryPair(before, after) {
   const interval_length = interval_end - interval_begin;
   const story_point_begin = story_begin.score;
   const story_point_delta = story_end.score - story_point_begin;
-  const comment_count_begin = story_begin.decendents;
-  const comment_count_delta = story_end.decendents - comment_count_begin;
+  const comment_count_begin = story_begin.descendants;
+  const comment_count_delta = story_end.decendants - comment_count_begin;
   const story_createdat = story_begin.time;
   return {
     story_id: story_begin.id,
