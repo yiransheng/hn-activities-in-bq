@@ -4,11 +4,18 @@
   "description": "webtask fun",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "npm test",
+    "build": "rollup -c",
+    "dev": "rollup -c -w"
   },
   "author": "Yiran Sheng",
   "license": "MIT",
   "dependencies": {
     "axios": "0.15.2"
+  },
+  "devDependencies": {
+    "rollup": "^0.47.6",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0"
   }
 }
