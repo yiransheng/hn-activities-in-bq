@@ -1,0 +1,14 @@
+{
+  "name": "hn-activity",
+  "version": "0.0.0",
+  "description": "webtask fun",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Yiran Sheng",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "0.15.2"
+  }
+}
