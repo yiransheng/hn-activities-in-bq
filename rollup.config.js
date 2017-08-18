@@ -11,6 +11,10 @@ export default [
   {
     entry: "src/main.js",
     external: ["axios"],
+    plugins: [
+			resolve(),
+      commonjs()
+		],
     targets: [
       { dest: pkg.main, format: "cjs" },
       // { dest: pkg.module, format: "es" }

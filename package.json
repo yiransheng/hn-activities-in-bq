@@ -11,14 +11,15 @@
   "author": "Yiran Sheng",
   "license": "MIT",
   "dependencies": {
-    "axios": "0.15.2"
+    "axios": "0.15.2",
+    "invariant": "^2.2.2"
   },
   "devDependencies": {
     "rollup": "^0.47.6",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-node-resolve": "^3.0.0"
   },
-  "files" : [
+  "files": [
     "dist"
   ]
 }
