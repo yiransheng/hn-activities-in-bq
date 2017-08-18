@@ -36,7 +36,7 @@ async function task() {
     };
   });
   const entries = zip(beforeEntries, afterEntries).map(([before, after]) =>
-    Object.assign(computeEntryFromStoryPair(before, after), { taskId })
+    Object.assign(computeEntryFromStoryPair(before, after), { task_id: taskId })
   );
   return entries;
 }
