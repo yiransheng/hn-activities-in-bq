@@ -28,9 +28,13 @@ export class HNApiClient {
   items(...ids) {
     return Promise.all(ids.map(id => this.item(id)));
   }
-  async topstories() {
+  async topstoryIds() {
     const { data: topStoryIds } = await this._axios.get("/topstories.json");
-    const storyIds = topStoryIds.slice(0, FRONT_PAGE_COUNT);
+    return topstoryIds;
+  }
+  async frontpageStories() {
+    const topstoryIds = await this.topstoryIds();
+    const storyIds = topstoryIds.slice(0, FRONT_PAGE_COUNT);
     const stories = await this.items(...storyIds);
     return stories;
   }
