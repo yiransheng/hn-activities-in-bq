@@ -13,12 +13,11 @@ async function task() {
   const beginTimestamp = Date.now();
 
   const stories = await client.frontpageStories();
-  const topIdsBefore = await client.topitemIds();
   const beforeEntries = stories.map(story => {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: getRank(topIdsBefore, story.id)
+      rank: story.rank
     };
   });
   const timeTook = Date.now() - beginTimestamp;

@@ -1,6 +1,7 @@
 import axios from "axios";
 import invariant from "invariant";
 import { parseTimestamp } from "./utils";
+import { getRank } from "./stats";
 
 const HN_API_ROOT = "https://hacker-news.firebaseio.com";
 const HN_API_VER = "v0";
@@ -11,7 +12,10 @@ function validateItemJSON(item) {
   invariant(typeof item.id === "number", "Invalid item id");
   invariant(typeof item.score === "number", "Invalid item score");
   if (item.type === "story") {
-    invariant(typeof item.descendants === "number", "Invalid item descendants count");
+    invariant(
+      typeof item.descendants === "number",
+      "Invalid item descendants count"
+    );
     invariant(item.descendants >= 0, "Invalid item descendants count");
   }
 }
@@ -51,6 +55,8 @@ export class HNApiClient {
     const topitemIds = await this.topitemIds();
     const storyIds = topitemIds.slice(0, FRONT_PAGE_COUNT);
     const stories = await this.stories(...storyIds);
-    return stories;
+    return stories.map(s =>
+      Object.assign(s, { rank: getRank(topitemIds, s.id) })
+    );
   }
 }

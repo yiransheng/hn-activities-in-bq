@@ -747,59 +747,6 @@ function sleep(milseconds) {
   });
 }
 
-const HN_API_ROOT = "https://hacker-news.firebaseio.com";
-const HN_API_VER = "v0";
-const FRONT_PAGE_COUNT = 30;
-
-function validateItemJSON(item) {
-  invariant_1(item != null, "Recieved Undefined item");
-  invariant_1(typeof item.id === "number", "Invalid item id");
-  invariant_1(typeof item.score === "number", "Invalid item score");
-  if (item.type === "story") {
-    invariant_1(typeof item.descendants === "number", "Invalid item descendants count");
-    invariant_1(item.descendants >= 0, "Invalid item descendants count");
-  }
-}
-
-class HNApiClient {
-  constructor() {
-    this._axios = axios.create({
-      baseURL: `${HN_API_ROOT}/${HN_API_VER}`
-    });
-  }
-  async maxitem() {
-    const { data: maxitem } = this._axios.get("/maxitem.json");
-    return maxitem;
-  }
-  async story(id) {
-    const { data: item } = await this._axios.get(`item/${id}.json`);
-    try {
-      validateItemJSON(item);
-      return Object.assign(item, {
-        time: parseTimestamp(item.time)
-      });
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-  async stories(...ids) {
-    const items = await Promise.all(ids.map(id => this.story(id)));
-    return items.filter(s => s.type === "story");
-  }
-  async topitemIds() {
-    // ids returned from this endpoint may contain "job" type of item
-    // we are not interested in these
-    const { data: topstoryIds } = await this._axios.get("/topstories.json");
-    return topstoryIds;
-  }
-  async frontpageStories() {
-    const topitemIds = await this.topitemIds();
-    const storyIds = topitemIds.slice(0, FRONT_PAGE_COUNT);
-    const stories = await this.stories(...storyIds);
-    return stories;
-  }
-}
-
 function getRank(topIds, storyId) {
   const index = topIds.indexOf(storyId);
   // return null if story is not among top500
@@ -839,6 +786,64 @@ function computeEntryFromStoryPair(before, after) {
   };
 }
 
+const HN_API_ROOT = "https://hacker-news.firebaseio.com";
+const HN_API_VER = "v0";
+const FRONT_PAGE_COUNT = 30;
+
+function validateItemJSON(item) {
+  invariant_1(item != null, "Recieved Undefined item");
+  invariant_1(typeof item.id === "number", "Invalid item id");
+  invariant_1(typeof item.score === "number", "Invalid item score");
+  if (item.type === "story") {
+    invariant_1(
+      typeof item.descendants === "number",
+      "Invalid item descendants count"
+    );
+    invariant_1(item.descendants >= 0, "Invalid item descendants count");
+  }
+}
+
+class HNApiClient {
+  constructor() {
+    this._axios = axios.create({
+      baseURL: `${HN_API_ROOT}/${HN_API_VER}`
+    });
+  }
+  async maxitem() {
+    const { data: maxitem } = this._axios.get("/maxitem.json");
+    return maxitem;
+  }
+  async story(id) {
+    const { data: item } = await this._axios.get(`item/${id}.json`);
+    try {
+      validateItemJSON(item);
+      return Object.assign(item, {
+        time: parseTimestamp(item.time)
+      });
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+  async stories(...ids) {
+    const items = await Promise.all(ids.map(id => this.story(id)));
+    return items.filter(s => s.type === "story");
+  }
+  async topitemIds() {
+    // ids returned from this endpoint may contain "job" type of item
+    // we are not interested in these
+    const { data: topstoryIds } = await this._axios.get("/topstories.json");
+    return topstoryIds;
+  }
+  async frontpageStories() {
+    const topitemIds = await this.topitemIds();
+    const storyIds = topitemIds.slice(0, FRONT_PAGE_COUNT);
+    const stories = await this.stories(...storyIds);
+    return stories.map(s =>
+      Object.assign(s, { rank: getRank(topitemIds, s.id) })
+    );
+  }
+}
+
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
 async function task() {
@@ -847,12 +852,11 @@ async function task() {
   const beginTimestamp = Date.now();
 
   const stories = await client.frontpageStories();
-  const topIdsBefore = await client.topitemIds();
   const beforeEntries = stories.map(story => {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: getRank(topIdsBefore, story.id)
+      rank: story.rank
     };
   });
   const timeTook = Date.now() - beginTimestamp;
