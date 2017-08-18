@@ -12,7 +12,8 @@ export class HNApiClient {
     });
   }
   async maxitem() {
-    return this._axios.get("/maxitem.json");
+    const { data:maxitem } = this._axios.get("/maxitem.json");
+    return maxitem;
   }
   async item(id) {
     const { data:item } = await this._axios.get(`item/${id}.json`);
