@@ -766,7 +766,6 @@ function computeEntryFromStoryPair(before, after) {
     timestamp: interval_end,
     rank: story_rank_end
   } = after;
-  const interval_length = interval_end - interval_begin;
   const story_point_begin = story_begin.score;
   const story_point_delta = story_end.score - story_point_begin;
   const comment_count_begin = story_begin.descendants;
@@ -776,7 +775,7 @@ function computeEntryFromStoryPair(before, after) {
     story_id: story_begin.id,
     story_createdat,
     interval_begin,
-    interval_length,
+    interval_end,
     story_point_begin,
     story_point_delta,
     comment_count_begin,
@@ -831,8 +830,8 @@ class HNApiClient {
   async topitemIds() {
     // ids returned from this endpoint may contain "job" type of item
     // we are not interested in these
-    const { data: topstoryIds } = await this._axios.get("/topstories.json");
-    return topstoryIds;
+    const { data: topitemIds } = await this._axios.get("/topstories.json");
+    return topitemIds;
   }
   async frontpageStories() {
     const topitemIds = await this.topitemIds();
@@ -849,7 +848,7 @@ const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 async function task() {
   const taskId = index$2();
   const client = new HNApiClient();
-  const beginTimestamp = Date.now();
+  const beginTimestamp = new Date();
 
   const stories = await client.frontpageStories();
   const beforeEntries = stories.map(story => {
@@ -859,10 +858,10 @@ async function task() {
       rank: story.rank
     };
   });
-  const timeTook = Date.now() - beginTimestamp;
+  const timeTook = new Date() - beginTimestamp;
 
   await sleep(SAMPLE_INTERVAL - timeTook);
-  const endTimestamp = Date.now();
+  const endTimestamp = new Date();
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)
   );
@@ -875,7 +874,7 @@ async function task() {
     };
   });
   const entries = index$1(beforeEntries, afterEntries).map(([before, after]) =>
-    Object.assign(computeEntryFromStoryPair(before, after), { taskId })
+    Object.assign(computeEntryFromStoryPair(before, after), { task_id: taskId })
   );
   return entries;
 }

@@ -17,7 +17,6 @@ export function computeEntryFromStoryPair(before, after) {
     timestamp: interval_end,
     rank: story_rank_end
   } = after;
-  const interval_length = interval_end - interval_begin;
   const story_point_begin = story_begin.score;
   const story_point_delta = story_end.score - story_point_begin;
   const comment_count_begin = story_begin.descendants;
@@ -27,7 +26,7 @@ export function computeEntryFromStoryPair(before, after) {
     story_id: story_begin.id,
     story_createdat,
     interval_begin,
-    interval_length,
+    interval_end,
     story_point_begin,
     story_point_delta,
     comment_count_begin,

@@ -48,8 +48,8 @@ export class HNApiClient {
   async topitemIds() {
     // ids returned from this endpoint may contain "job" type of item
     // we are not interested in these
-    const { data: topstoryIds } = await this._axios.get("/topstories.json");
-    return topstoryIds;
+    const { data: topitemIds } = await this._axios.get("/topstories.json");
+    return topitemIds;
   }
   async frontpageStories() {
     const topitemIds = await this.topitemIds();

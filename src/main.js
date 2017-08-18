@@ -10,7 +10,7 @@ const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 async function task() {
   const taskId = shortid();
   const client = new HNApiClient();
-  const beginTimestamp = Date.now();
+  const beginTimestamp = new Date();
 
   const stories = await client.frontpageStories();
   const beforeEntries = stories.map(story => {
@@ -20,10 +20,10 @@ async function task() {
       rank: story.rank
     };
   });
-  const timeTook = Date.now() - beginTimestamp;
+  const timeTook = new Date() - beginTimestamp;
 
   await sleep(SAMPLE_INTERVAL - timeTook);
-  const endTimestamp = Date.now();
+  const endTimestamp = new Date();
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)
   );

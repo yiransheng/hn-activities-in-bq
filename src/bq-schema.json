@@ -1,0 +1,52 @@
+[
+  {
+    name: "story_id",
+    mode: "required",
+    type: "integer"
+  },
+  {
+    name: "story_createdat",
+    mode: "required",
+    type: "timestamp"
+  },
+  {
+    name: "interval_begin",
+    mode: "required",
+    type: "timestamp"
+  },
+  {
+    name: "interval_end",
+    mode: "required",
+    type: "timestamp"
+  },
+  {
+    name: "story_point_begin",
+    mode: "required",
+    type: "integer"
+  },
+  {
+    name: "story_point_delta",
+    mode: "required",
+    type: "integer"
+  },
+  {
+    name: "comment_count_begin",
+    mode: "required",
+    type: "integer"
+  },
+  {
+    name: "comment_count_delta",
+    mode: "required",
+    type: "integer"
+  },
+  {
+    name: "story_rank_begin",
+    mode: "nullable",
+    type: "integer"
+  },
+  {
+    name: "story_rank_end",
+    mode: "nullable",
+    type: "integer"
+  }
+]
