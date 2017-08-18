@@ -6,3 +6,9 @@ export function parseTimestamp(time) {
   }
   return timestamp;
 }
+
+export function sleep(milseconds) {
+  return new Promise(resolve => {
+    setTimeout(resolve, milseconds);
+  });
+}
