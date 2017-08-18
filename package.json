@@ -13,7 +13,8 @@
   "dependencies": {
     "axios": "0.15.2",
     "invariant": "^2.2.2",
-    "lodash.zip": "^4.2.0"
+    "lodash.zip": "^4.2.0",
+    "shortid": "^2.2.8"
   },
   "devDependencies": {
     "rollup": "^0.47.6",

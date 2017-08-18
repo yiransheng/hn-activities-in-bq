@@ -10,7 +10,7 @@ export default [
   // the `targets` option which can specify `dest` and `format`)
   {
     entry: "src/main.js",
-    external: ["axios"],
+    external: ["axios", "crypto"],
     plugins: [
 			resolve(),
       commonjs()

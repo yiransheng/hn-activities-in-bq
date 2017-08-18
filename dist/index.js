@@ -2,164 +2,8 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
+var crypto = _interopDefault(require('crypto'));
 var axios = _interopDefault(require('axios'));
-
-/**
- * Copyright 2013-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- */
-
-/**
- * Use invariant() to assert state which your program assumes to be true.
- *
- * Provide sprintf-style format (only %s is supported) and arguments
- * to provide information about what broke and what you were
- * expecting.
- *
- * The invariant message will be stripped in production, but the invariant
- * will remain to ensure logic does not differ in production.
- */
-
-var NODE_ENV = process.env.NODE_ENV;
-
-var invariant = function(condition, format, a, b, c, d, e, f) {
-  if (NODE_ENV !== 'production') {
-    if (format === undefined) {
-      throw new Error('invariant requires an error message argument');
-    }
-  }
-
-  if (!condition) {
-    var error;
-    if (format === undefined) {
-      error = new Error(
-        'Minified exception occurred; use the non-minified dev environment ' +
-        'for the full error message and additional helpful warnings.'
-      );
-    } else {
-      var args = [a, b, c, d, e, f];
-      var argIndex = 0;
-      error = new Error(
-        format.replace(/%s/g, function() { return args[argIndex++]; })
-      );
-      error.name = 'Invariant Violation';
-    }
-
-    error.framesToPop = 1; // we don't care about invariant's own frame
-    throw error;
-  }
-};
-
-var invariant_1 = invariant;
-
-function parseTimestamp(time) {
-  time = parseInt(time, 10);
-  const timestamp = new Date(time * 1000);
-  if (timestamp.toString() === "Invalid Date") {
-    throw TypeError(timestamp);
-  }
-  return timestamp;
-}
-
-function sleep(milseconds) {
-  return new Promise(resolve => {
-    setTimeout(resolve, milseconds);
-  });
-}
-
-const HN_API_ROOT = "https://hacker-news.firebaseio.com";
-const HN_API_VER = "v0";
-const FRONT_PAGE_COUNT = 30;
-
-function validateItemJSON(item) {
-  invariant_1(item != null, "Recieved Undefined item");
-  invariant_1(typeof item.id === "number", "Invalid item id");
-  invariant_1(typeof item.score === "number", "Invalid item score");
-  if (item.type === "story") {
-    invariant_1(typeof item.descendants === "number", "Invalid item descendants count");
-    invariant_1(item.descendants >= 0, "Invalid item descendants count");
-  }
-}
-
-class HNApiClient {
-  constructor() {
-    this._axios = axios.create({
-      baseURL: `${HN_API_ROOT}/${HN_API_VER}`
-    });
-  }
-  async maxitem() {
-    const { data: maxitem } = this._axios.get("/maxitem.json");
-    return maxitem;
-  }
-  async story(id) {
-    const { data: item } = await this._axios.get(`item/${id}.json`);
-    try {
-      validateItemJSON(item);
-      return Object.assign(item, {
-        time: parseTimestamp(item.time)
-      });
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-  async stories(...ids) {
-    const items = await Promise.all(ids.map(id => this.story(id)));
-    return items.filter(s => s.type === "story");
-  }
-  async topstoryIds() {
-    const { data: topstoryIds } = await this._axios.get("/topstories.json");
-    return topstoryIds;
-  }
-  async frontpageStories() {
-    const topstoryIds = await this.topstoryIds();
-    const storyIds = topstoryIds.slice(0, FRONT_PAGE_COUNT);
-    const stories = await this.stories(...storyIds);
-    return stories;
-  }
-}
-
-function getRank(topIds, storyId) {
-  const index = topIds.indexOf(storyId);
-  // return null if story is not among top500
-  // rationale: this value will be written to a BigQuery
-  // nullable column
-  return index > -1 ? index + 1 : null;
-}
-
-function computeEntryFromStoryPair(before, after) {
-  const {
-    story: story_begin,
-    timestamp: interval_begin,
-    rank: story_rank_begin
-  } = before;
-  const {
-    story: story_end,
-    timestamp: interval_end,
-    rank: story_rank_end
-  } = after;
-  const interval_length = interval_end - interval_begin;
-  const story_point_begin = story_begin.score;
-  const story_point_delta = story_end.score - story_point_begin;
-  const comment_count_begin = story_begin.descendants;
-  const comment_count_delta = story_end.descendants - comment_count_begin;
-  const story_createdat = story_begin.time;
-  return {
-    story_id: story_begin.id,
-    story_createdat,
-    interval_begin,
-    interval_length,
-    story_point_begin,
-    story_point_delta,
-    comment_count_begin,
-    comment_count_delta,
-    story_rank_begin,
-    story_rank_end
-  };
-}
 
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -539,20 +383,476 @@ function isObjectLike(value) {
   return !!value && typeof value == 'object';
 }
 
-var index = zip;
+var index$1 = zip;
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+// Found this seed-based random generator somewhere
+// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
+
+var seed = 1;
+
+/**
+ * return a random number based on a seed
+ * @param seed
+ * @returns {number}
+ */
+function getNextValue() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed/(233280.0);
+}
+
+function setSeed$1(_seed_) {
+    seed = _seed_;
+}
+
+var randomFromSeed = {
+    nextValue: getNextValue,
+    seed: setSeed$1
+};
+
+var ORIGINAL = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+var alphabet;
+var previousSeed;
+
+var shuffled;
+
+function reset() {
+    shuffled = false;
+}
+
+function setCharacters(_alphabet_) {
+    if (!_alphabet_) {
+        if (alphabet !== ORIGINAL) {
+            alphabet = ORIGINAL;
+            reset();
+        }
+        return;
+    }
+
+    if (_alphabet_ === alphabet) {
+        return;
+    }
+
+    if (_alphabet_.length !== ORIGINAL.length) {
+        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
+    }
+
+    var unique = _alphabet_.split('').filter(function(item, ind, arr){
+       return ind !== arr.lastIndexOf(item);
+    });
+
+    if (unique.length) {
+        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
+    }
+
+    alphabet = _alphabet_;
+    reset();
+}
+
+function characters(_alphabet_) {
+    setCharacters(_alphabet_);
+    return alphabet;
+}
+
+function setSeed(seed) {
+    randomFromSeed.seed(seed);
+    if (previousSeed !== seed) {
+        reset();
+        previousSeed = seed;
+    }
+}
+
+function shuffle() {
+    if (!alphabet) {
+        setCharacters(ORIGINAL);
+    }
+
+    var sourceArray = alphabet.split('');
+    var targetArray = [];
+    var r = randomFromSeed.nextValue();
+    var characterIndex;
+
+    while (sourceArray.length > 0) {
+        r = randomFromSeed.nextValue();
+        characterIndex = Math.floor(r * sourceArray.length);
+        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
+    }
+    return targetArray.join('');
+}
+
+function getShuffled() {
+    if (shuffled) {
+        return shuffled;
+    }
+    shuffled = shuffle();
+    return shuffled;
+}
+
+/**
+ * lookup shuffled letter
+ * @param index
+ * @returns {string}
+ */
+function lookup(index) {
+    var alphabetShuffled = getShuffled();
+    return alphabetShuffled[index];
+}
+
+var alphabet_1 = {
+    characters: characters,
+    seed: setSeed,
+    lookup: lookup,
+    shuffled: getShuffled
+};
+
+var randomBytes = crypto.randomBytes;
+
+function randomByte() {
+    return randomBytes(1)[0] & 0x30;
+}
+
+var randomByte_1 = randomByte;
+
+function encode(lookup, number) {
+    var loopCounter = 0;
+    var done;
+
+    var str = '';
+
+    while (!done) {
+        str = str + lookup( ( (number >> (4 * loopCounter)) & 0x0f ) | randomByte_1() );
+        done = number < (Math.pow(16, loopCounter + 1 ) );
+        loopCounter++;
+    }
+    return str;
+}
+
+var encode_1 = encode;
+
+/**
+ * Decode the id to get the version and worker
+ * Mainly for debugging and testing.
+ * @param id - the shortid-generated id.
+ */
+function decode(id) {
+    var characters = alphabet_1.shuffled();
+    return {
+        version: characters.indexOf(id.substr(0, 1)) & 0x0f,
+        worker: characters.indexOf(id.substr(1, 1)) & 0x0f
+    };
+}
+
+var decode_1 = decode;
+
+// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
+// This number should be updated every year or so to keep the generated id short.
+// To regenerate `new Date() - 0` and bump the version. Always bump the version!
+var REDUCE_TIME = 1459707606518;
+
+// don't change unless we change the algos or REDUCE_TIME
+// must be an integer and less than 16
+var version = 6;
+
+// Counter is used when shortid is called multiple times in one second.
+var counter;
+
+// Remember the last time shortid was called in case counter is needed.
+var previousSeconds;
+
+/**
+ * Generate unique id
+ * Returns string id
+ */
+function build(clusterWorkerId) {
+
+    var str = '';
+
+    var seconds = Math.floor((Date.now() - REDUCE_TIME) * 0.001);
+
+    if (seconds === previousSeconds) {
+        counter++;
+    } else {
+        counter = 0;
+        previousSeconds = seconds;
+    }
+
+    str = str + encode_1(alphabet_1.lookup, version);
+    str = str + encode_1(alphabet_1.lookup, clusterWorkerId);
+    if (counter > 0) {
+        str = str + encode_1(alphabet_1.lookup, counter);
+    }
+    str = str + encode_1(alphabet_1.lookup, seconds);
+
+    return str;
+}
+
+var build_1 = build;
+
+function isShortId(id) {
+    if (!id || typeof id !== 'string' || id.length < 6 ) {
+        return false;
+    }
+
+    var characters = alphabet_1.characters();
+    var len = id.length;
+    for(var i = 0; i < len;i++) {
+        if (characters.indexOf(id[i]) === -1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+var isValid = isShortId;
+
+var clusterWorkerId = parseInt(process.env.NODE_UNIQUE_ID || 0, 10);
+
+var index$3 = createCommonjsModule(function (module) {
+'use strict';
+
+
+
+
+
+
+
+// if you are using cluster or multiple servers use this to make each instance
+// has a unique value for worker
+// Note: I don't know if this is automatically set when using third
+// party cluster solutions such as pm2.
+var clusterWorkerId$$1 = clusterWorkerId || 0;
+
+/**
+ * Set the seed.
+ * Highly recommended if you don't want people to try to figure out your id schema.
+ * exposed as shortid.seed(int)
+ * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
+ */
+function seed(seedValue) {
+    alphabet_1.seed(seedValue);
+    return module.exports;
+}
+
+/**
+ * Set the cluster worker or machine id
+ * exposed as shortid.worker(int)
+ * @param workerId worker must be positive integer.  Number less than 16 is recommended.
+ * returns shortid module so it can be chained.
+ */
+function worker(workerId) {
+    clusterWorkerId$$1 = workerId;
+    return module.exports;
+}
+
+/**
+ *
+ * sets new characters to use in the alphabet
+ * returns the shuffled alphabet
+ */
+function characters(newCharacters) {
+    if (newCharacters !== undefined) {
+        alphabet_1.characters(newCharacters);
+    }
+
+    return alphabet_1.shuffled();
+}
+
+/**
+ * Generate unique id
+ * Returns string id
+ */
+function generate() {
+  return build_1(clusterWorkerId$$1);
+}
+
+// Export all other functions as properties of the generate function
+module.exports = generate;
+module.exports.generate = generate;
+module.exports.seed = seed;
+module.exports.worker = worker;
+module.exports.characters = characters;
+module.exports.decode = decode_1;
+module.exports.isValid = isValid;
+});
+
+var index$2 = index$3;
+
+/**
+ * Copyright 2013-2015, Facebook, Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+/**
+ * Use invariant() to assert state which your program assumes to be true.
+ *
+ * Provide sprintf-style format (only %s is supported) and arguments
+ * to provide information about what broke and what you were
+ * expecting.
+ *
+ * The invariant message will be stripped in production, but the invariant
+ * will remain to ensure logic does not differ in production.
+ */
+
+var NODE_ENV = process.env.NODE_ENV;
+
+var invariant = function(condition, format, a, b, c, d, e, f) {
+  if (NODE_ENV !== 'production') {
+    if (format === undefined) {
+      throw new Error('invariant requires an error message argument');
+    }
+  }
+
+  if (!condition) {
+    var error;
+    if (format === undefined) {
+      error = new Error(
+        'Minified exception occurred; use the non-minified dev environment ' +
+        'for the full error message and additional helpful warnings.'
+      );
+    } else {
+      var args = [a, b, c, d, e, f];
+      var argIndex = 0;
+      error = new Error(
+        format.replace(/%s/g, function() { return args[argIndex++]; })
+      );
+      error.name = 'Invariant Violation';
+    }
+
+    error.framesToPop = 1; // we don't care about invariant's own frame
+    throw error;
+  }
+};
+
+var invariant_1 = invariant;
+
+function parseTimestamp(time) {
+  time = parseInt(time, 10);
+  const timestamp = new Date(time * 1000);
+  if (timestamp.toString() === "Invalid Date") {
+    throw TypeError(timestamp);
+  }
+  return timestamp;
+}
+
+function sleep(milseconds) {
+  return new Promise(resolve => {
+    setTimeout(resolve, milseconds);
+  });
+}
+
+const HN_API_ROOT = "https://hacker-news.firebaseio.com";
+const HN_API_VER = "v0";
+const FRONT_PAGE_COUNT = 30;
+
+function validateItemJSON(item) {
+  invariant_1(item != null, "Recieved Undefined item");
+  invariant_1(typeof item.id === "number", "Invalid item id");
+  invariant_1(typeof item.score === "number", "Invalid item score");
+  if (item.type === "story") {
+    invariant_1(typeof item.descendants === "number", "Invalid item descendants count");
+    invariant_1(item.descendants >= 0, "Invalid item descendants count");
+  }
+}
+
+class HNApiClient {
+  constructor() {
+    this._axios = axios.create({
+      baseURL: `${HN_API_ROOT}/${HN_API_VER}`
+    });
+  }
+  async maxitem() {
+    const { data: maxitem } = this._axios.get("/maxitem.json");
+    return maxitem;
+  }
+  async story(id) {
+    const { data: item } = await this._axios.get(`item/${id}.json`);
+    try {
+      validateItemJSON(item);
+      return Object.assign(item, {
+        time: parseTimestamp(item.time)
+      });
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+  async stories(...ids) {
+    const items = await Promise.all(ids.map(id => this.story(id)));
+    return items.filter(s => s.type === "story");
+  }
+  async topitemIds() {
+    // ids returned from this endpoint may contain "job" type of item
+    // we are not interested in these
+    const { data: topstoryIds } = await this._axios.get("/topstories.json");
+    return topstoryIds;
+  }
+  async frontpageStories() {
+    const topitemIds = await this.topitemIds();
+    const storyIds = topitemIds.slice(0, FRONT_PAGE_COUNT);
+    const stories = await this.stories(...storyIds);
+    return stories;
+  }
+}
+
+function getRank(topIds, storyId) {
+  const index = topIds.indexOf(storyId);
+  // return null if story is not among top500
+  // rationale: this value will be written to a BigQuery
+  // nullable column
+  return index > -1 ? index + 1 : null;
+}
+
+function computeEntryFromStoryPair(before, after) {
+  const {
+    story: story_begin,
+    timestamp: interval_begin,
+    rank: story_rank_begin
+  } = before;
+  const {
+    story: story_end,
+    timestamp: interval_end,
+    rank: story_rank_end
+  } = after;
+  const interval_length = interval_end - interval_begin;
+  const story_point_begin = story_begin.score;
+  const story_point_delta = story_end.score - story_point_begin;
+  const comment_count_begin = story_begin.descendants;
+  const comment_count_delta = story_end.descendants - comment_count_begin;
+  const story_createdat = story_begin.time;
+  return {
+    story_id: story_begin.id,
+    story_createdat,
+    interval_begin,
+    interval_length,
+    story_point_begin,
+    story_point_delta,
+    comment_count_begin,
+    comment_count_delta,
+    story_rank_begin,
+    story_rank_end
+  };
+}
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
 async function task() {
+  const taskId = index$2();
   const client = new HNApiClient();
   const beginTimestamp = Date.now();
 
   const stories = await client.frontpageStories();
-  const beforeEntries = stories.map((story, index$$1) => {
+  const topIdsBefore = await client.topitemIds();
+  const beforeEntries = stories.map(story => {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: index$$1 + 1
+      rank: getRank(topIdsBefore, story.id)
     };
   });
   const timeTook = Date.now() - beginTimestamp;
@@ -562,16 +862,16 @@ async function task() {
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)
   );
-  const topIds = await client.topstoryIds();
+  const topIdsAfter = await client.topitemIds();
   const afterEntries = updatedStories.map(story => {
     return {
       story,
       timestamp: endTimestamp,
-      rank: getRank(topIds, story.id)
+      rank: getRank(topIdsAfter, story.id)
     };
   });
-  const entries = index(beforeEntries, afterEntries).map(([before, after]) =>
-    computeEntryFromStoryPair(before, after)
+  const entries = index$1(beforeEntries, afterEntries).map(([before, after]) =>
+    Object.assign(computeEntryFromStoryPair(before, after), { taskId })
   );
   return entries;
 }

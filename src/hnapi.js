@@ -41,13 +41,15 @@ export class HNApiClient {
     const items = await Promise.all(ids.map(id => this.story(id)));
     return items.filter(s => s.type === "story");
   }
-  async topstoryIds() {
+  async topitemIds() {
+    // ids returned from this endpoint may contain "job" type of item
+    // we are not interested in these
     const { data: topstoryIds } = await this._axios.get("/topstories.json");
     return topstoryIds;
   }
   async frontpageStories() {
-    const topstoryIds = await this.topstoryIds();
-    const storyIds = topstoryIds.slice(0, FRONT_PAGE_COUNT);
+    const topitemIds = await this.topitemIds();
+    const storyIds = topitemIds.slice(0, FRONT_PAGE_COUNT);
     const stories = await this.stories(...storyIds);
     return stories;
   }

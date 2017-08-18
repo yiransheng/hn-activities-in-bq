@@ -1,20 +1,24 @@
+import zip from "lodash.zip";
+import shortid from "shortid";
+
 import { HNApiClient } from "./hnapi";
 import { sleep } from "./utils";
 import { computeEntryFromStoryPair, getRank } from "./stats";
-import zip from "lodash.zip";
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
 async function task() {
+  const taskId = shortid();
   const client = new HNApiClient();
   const beginTimestamp = Date.now();
 
   const stories = await client.frontpageStories();
-  const beforeEntries = stories.map((story, index) => {
+  const topIdsBefore = await client.topitemIds();
+  const beforeEntries = stories.map(story => {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: index + 1
+      rank: getRank(topIdsBefore, story.id)
     };
   });
   const timeTook = Date.now() - beginTimestamp;
@@ -24,16 +28,16 @@ async function task() {
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)
   );
-  const topIds = await client.topstoryIds();
+  const topIdsAfter = await client.topitemIds();
   const afterEntries = updatedStories.map(story => {
     return {
       story,
       timestamp: endTimestamp,
-      rank: getRank(topIds, story.id)
+      rank: getRank(topIdsAfter, story.id)
     };
   });
   const entries = zip(beforeEntries, afterEntries).map(([before, after]) =>
-    computeEntryFromStoryPair(before, after)
+    Object.assign(computeEntryFromStoryPair(before, after), { taskId })
   );
   return entries;
 }
