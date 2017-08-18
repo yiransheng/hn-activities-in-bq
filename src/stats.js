@@ -6,7 +6,7 @@ export function getRank(topIds, storyId) {
   return index > -1 ? index + 1 : null;
 }
 
-export function compareStoryPair(before, after) {
+export function computeEntryFromStoryPair(before, after) {
   const {
     story: story_begin,
     timestamp: interval_begin,

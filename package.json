@@ -12,7 +12,8 @@
   "license": "MIT",
   "dependencies": {
     "axios": "0.15.2",
-    "invariant": "^2.2.2"
+    "invariant": "^2.2.2",
+    "lodash.zip": "^4.2.0"
   },
   "devDependencies": {
     "rollup": "^0.47.6",
