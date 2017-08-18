@@ -1,9 +1,19 @@
 import axios from "axios";
+import invariant from "invariant";
 import { parseTimestamp } from "./utils";
 
 const HN_API_ROOT = "https://hacker-news.firebaseio.com";
 const HN_API_VER = "v0";
 const FRONT_PAGE_COUNT = 30;
+
+function validateStoryJSON(item) {
+  invariant(item != null, "Recieved Undefined item");
+  invariant(typeof item.id === "number", "Invalid item id");
+  invariant(item.type === "story", "Item is not a story");
+  invariant(typeof item.score === "number", "Invalid item score");
+  invariant(typeof item.decendents === "number", "Invalid item decendents count");
+  invariant(item.decendents >= 0, "Invalid item decendents count");
+}
 
 export class HNApiClient {
   constructor() {
@@ -15,9 +25,10 @@ export class HNApiClient {
     const { data: maxitem } = this._axios.get("/maxitem.json");
     return maxitem;
   }
-  async item(id) {
+  async story(id) {
     const { data: item } = await this._axios.get(`item/${id}.json`);
     try {
+      validateStoryJSON(item);
       return Object.assign(item, {
         time: parseTimestamp(item.time)
       });
