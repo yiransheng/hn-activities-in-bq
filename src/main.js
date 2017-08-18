@@ -17,8 +17,9 @@ async function task() {
       rank: index + 1
     };
   });
+  const timeTook = Date.now() - beginTimestamp;
 
-  await sleep(SAMPLE_INTERVAL);
+  await sleep(SAMPLE_INTERVAL - timeTook);
   const endTimestamp = Date.now();
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)

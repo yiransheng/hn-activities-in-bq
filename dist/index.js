@@ -145,7 +145,7 @@ function computeEntryFromStoryPair(before, after) {
   const story_point_begin = story_begin.score;
   const story_point_delta = story_end.score - story_point_begin;
   const comment_count_begin = story_begin.descendants;
-  const comment_count_delta = story_end.decendants - comment_count_begin;
+  const comment_count_delta = story_end.descendants - comment_count_begin;
   const story_createdat = story_begin.time;
   return {
     story_id: story_begin.id,
@@ -552,11 +552,12 @@ async function task() {
     return {
       story,
       timestamp: beginTimestamp,
-      rank: index$$1
+      rank: index$$1 + 1
     };
   });
+  const timeTook = Date.now() - beginTimestamp;
 
-  await sleep(SAMPLE_INTERVAL);
+  await sleep(SAMPLE_INTERVAL - timeTook);
   const endTimestamp = Date.now();
   const updatedStories = await client.stories(
     ...stories.map(story => story.id)
