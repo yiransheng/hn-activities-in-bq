@@ -4,10 +4,11 @@ import shortid from "shortid";
 import { HNApiClient } from "./hnapi";
 import { sleep } from "./utils";
 import { computeEntryFromStoryPair, getRank } from "./stats";
+import { bqjob } from "./bqjob";
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
-async function task() {
+async function fetch() {
   const taskId = shortid();
   const client = new HNApiClient();
   const beginTimestamp = new Date();
@@ -41,4 +42,11 @@ async function task() {
   return entries;
 }
 
-task().then(console.log.bind(console));
+async function task() {
+  try {
+    await fetch().then(bqjob);
+    console.log("Submited to BigQuery");
+  } catch (err) {
+    console.error("Task failed, reason: ", err);
+  }
+}
