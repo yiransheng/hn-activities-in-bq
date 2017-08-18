@@ -8,7 +8,13 @@ import { bqjob } from "./bqjob";
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
-async function fetch() {
+module.exports = function(ctx, cb) {
+  task().then(() => {
+    cb(null, { success: true });
+  });
+};
+
+async function fetchStats() {
   const taskId = shortid();
   const client = new HNApiClient();
   const beginTimestamp = new Date();
@@ -44,7 +50,7 @@ async function fetch() {
 
 async function task() {
   try {
-    await fetch().then(bqjob);
+    await fetchStats().then(bqjob);
     console.log("Submited to BigQuery");
   } catch (err) {
     console.error("Task failed, reason: ", err);
