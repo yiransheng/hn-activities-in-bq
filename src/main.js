@@ -58,3 +58,7 @@ async function task() {
     console.error("Task failed, reason: ", err);
   }
 }
+
+module.exports = task;
+
+task();

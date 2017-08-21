@@ -18,15 +18,21 @@ export default [
       "util",
       "events",
       "stream",
+      "readable-stream",
+      "concat-stream",
+      "through2",
+      "duplexify",
       "buffer",
       "punycode",
+      "duplexify",
       "fs",
       "path",
       "querystring",
       "child_process",
       "os"
+      // "@google-cloud/bigquery"
     ],
-    plugins: [resolve(), json(), commonjs()],
+    plugins: [resolve(), commonjs(), json()],
     targets: [
       { dest: pkg.main, format: "cjs" }
       // { dest: pkg.module, format: "es" }

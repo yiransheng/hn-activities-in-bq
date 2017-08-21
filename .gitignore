@@ -58,3 +58,6 @@ typings/
 
 # tern
 .tern*
+
+# credentials
+bq-key.json
