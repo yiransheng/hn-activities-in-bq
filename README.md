@@ -10,6 +10,10 @@ This project consists of three components:
 * A`webtask` endpoint to serve last 24 hours worth of data from BigQuery [./serve](./serve)
 * Some visualization and analysis using Jupyter and python BigQuery client [./analyze](./analyze)
 
+[Link to View NoteBook](https://nbviewer.jupyter.org/github/yiransheng/hn-activities-in-bq/blob/master/analyze/HN%20Activities.ipynb)
+
+![](./analyze/viz.png)
+
 
 
 ## Deploying
