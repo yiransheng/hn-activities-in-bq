@@ -8,14 +8,6 @@ import { bqjob } from "./bqjob";
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
-/*
- * module.exports = function(ctx, cb) {
- *   task().then(() => {
- *     cb(null, { success: true });
- *   });
- * };
- */
-
 async function fetchStats() {
   const taskId = shortid();
   const client = new HNApiClient();
@@ -50,15 +42,26 @@ async function fetchStats() {
   return entries;
 }
 
-async function task() {
+async function task(credentials) {
+  const bqSubmitJob = bqjob(credentials);
   try {
-    await fetchStats().then(bqjob);
+    await fetchStats().then(bqSubmitJob);
     console.log("Submited to BigQuery");
   } catch (err) {
     console.error("Task failed, reason: ", err);
+    return Promise.reject(err);
   }
 }
 
-module.exports = task;
-
-task();
+module.exports = function(context, callback) {
+  const bqCreds = JSON.parse(context.secrets.key);
+  task(bqCreds)
+    .then(() => {
+      console.log("Task Completed");
+      callback(null, { success: true });
+    })
+    .catch(err => {
+      console.error("Task failed, reason: ", err);
+      callback(err, null);
+    });
+};

@@ -60,4 +60,4 @@ typings/
 .tern*
 
 # credentials
-bq-key.json
+bq-key.txt
