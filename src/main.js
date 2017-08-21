@@ -6,7 +6,7 @@ import { sleep } from "./utils";
 import { computeEntryFromStoryPair, getRank } from "./stats";
 import { bqjob } from "./bqjob";
 
-const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
+const SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
 
 async function fetchStats() {
   const taskId = shortid();
