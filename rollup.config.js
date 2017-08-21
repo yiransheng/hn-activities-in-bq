@@ -1,7 +1,10 @@
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
 import json from "rollup-plugin-json";
+import alias from "rollup-plugin-alias";
 import pkg from "./package.json";
+
+import path from "path";
 
 export default [
   // CommonJS (for Node) and ES module (for bundlers) build.
@@ -14,25 +17,31 @@ export default [
     external: [
       "axios",
       "crypto",
+      "mime",
+      "stream",
       "request",
       "util",
       "events",
-      "stream",
-      "readable-stream",
-      "concat-stream",
-      "through2",
-      "duplexify",
       "buffer",
       "punycode",
-      "duplexify",
       "fs",
       "path",
       "querystring",
       "child_process",
-      "os"
-      // "@google-cloud/bigquery"
+      "os",
+      "array-uniq",
+      "arrify",
+      "extend"
+      // "google-service-account"
     ],
-    plugins: [resolve(), commonjs(), json()],
+    plugins: [
+      alias({
+        "google-p12-pem": path.resolve(__dirname, "./empty-module.js")
+      }),
+      resolve(),
+      commonjs(),
+      json()
+    ],
     targets: [
       { dest: pkg.main, format: "cjs" }
       // { dest: pkg.module, format: "es" }
