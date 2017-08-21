@@ -4,7 +4,8 @@ import config from "./config";
 export function bqjob(rows) {
   const { projectId, datasetId, tableId } = config;
   const table = bq({
-    projectId
+    projectId,
+    keyFilename : "./hnactivity-9af74bcc071f.json"
   })
     .dataset(datasetId)
     .table(tableId);
