@@ -2066,7 +2066,7 @@ function bqjob(credentials) {
   };
 }
 
-const SAMPLE_INTERVAL = 10 * 1000; // 60 seconds
+const SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
 
 async function fetchStats() {
   const taskId = index$1();
@@ -2113,6 +2113,17 @@ async function task(credentials) {
   }
 }
 
+function execute(context, callback) {
+  const bqCreds = JSON.parse(context.secrets.gcloud);
+  task(bqCreds)
+    .then(() => {
+      console.log("Task Completed");
+      callback(null, { success: true });
+    })
+    .catch(err => {
+      console.error("Task failed, reason: ", err);
+      callback(err, null);
+    });
+}
 
-
-task({    "type": "service_account",    "project_id": "hnactivity",    "private_key_id": "9af74bcc071fd2e6d262c1ed3323fbcc628e61be",    "private_key": "-----BEGIN PRIVATE KEY-----\nMI***REMOVED***\n-----END PRIVATE KEY-----\n",    "client_email": "hnstats-push@hnactivity.iam.gserviceaccount.com",    "client_id": "109989441968882532096",    "auth_uri": "https://accounts.google.com/o/oauth2/auth",    "token_uri": "https://accounts.google.com/o/oauth2/token",    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/hnstats-push%40hnactivity.iam.gserviceaccount.com"  });
+module.exports = execute;

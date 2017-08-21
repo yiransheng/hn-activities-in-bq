@@ -6,7 +6,7 @@ import { sleep } from "./utils";
 import { computeEntryFromStoryPair, getRank } from "./stats";
 import { bqjob } from "./bqjob";
 
-const SAMPLE_INTERVAL = 10 * 1000; // 60 seconds
+const SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
 
 async function fetchStats() {
   const taskId = shortid();
@@ -54,7 +54,7 @@ async function task(credentials) {
 }
 
 function execute(context, callback) {
-  const bqCreds = JSON.parse(context.secrets.key);
+  const bqCreds = JSON.parse(context.secrets.gcloud);
   task(bqCreds)
     .then(() => {
       console.log("Task Completed");
