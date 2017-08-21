@@ -77,13 +77,13 @@ The core logic of data fetching is defined in `src/main.js` as an `async` functi
 
 ### Challenges in Implementation
 
-The most difficult part was to get `dist/index.js` fit under `webtask`'s file size limit (12280 bytes). I had a misconception about webtask, I thought any external npm dependencies has be inlined and bundled into a single file if they are not provided by webtask.
+The most difficult part was to get `dist/index.js` fit under `webtask`'s file size limit (12280 bytes). I had a misconception about webtask, I thought any external npm dependencies has to be inlined and bundled into a single file if they are not provided by webtask.
 
 
 
 Official BigQuery client `@google-cloud/bigquery` has an enormous file size when bundled making it infeasible to use. I had to create a custom BigQuery client implementation (supporting only a single api I needed `table.insertAll`). Underlying authorization process (OAuth handshake and requesting correct google cloud scopes) is handled by `google-service-account` npm package - which depends on `gtoken`. 
 
-Unfortunately, when inlined, `gtoken` is still to big for `webtask`'s task - due to one of its dependencies `google-p12-pem`. To support full google clould api auth, `gtoken` needs to work with legacy p12 key. However, for my use case (using Google Service Account JSON key), this functionality is not needed. I finally solved this problem by using `rollup-plugin-alias`, and alias the `google-p12-pem` package to an empty module.
+Unfortunately, when inlined, `gtoken` is still to big for `webtask`'s taste - due to one of its dependencies `google-p12-pem`. To support full google clould api auth, `gtoken` needs to work with legacy p12 key. However, for my use case (using Google Service Account JSON key), this functionality is not needed. I finally solved this problem by using `rollup-plugin-alias`, and alias the `google-p12-pem` package to an empty module.
 
 
 
