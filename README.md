@@ -12,6 +12,8 @@ This project consists of three components:
 
 [Link to View NoteBook](https://nbviewer.jupyter.org/github/yiransheng/hn-activities-in-bq/blob/master/analyze/HN%20Activities.ipynb)
 
+[Linke to view HTML](https://htmlpreview.github.io/?https://raw.githubusercontent.com/yiransheng/hn-activities-in-bq/master/analyze/HN_activities_notebook.html)
+
 ![](./analyze/viz.png)
 
 
