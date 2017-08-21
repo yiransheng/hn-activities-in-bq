@@ -20,6 +20,7 @@
   "devDependencies": {
     "rollup": "^0.47.6",
     "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-json": "^2.3.0",
     "rollup-plugin-node-resolve": "^3.0.0"
   },
   "files": [

@@ -1,5 +1,6 @@
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
+import json from "rollup-plugin-json";
 import pkg from "./package.json";
 
 export default [
@@ -10,13 +11,24 @@ export default [
   // the `targets` option which can specify `dest` and `format`)
   {
     entry: "src/main.js",
-    external: ["axios", "crypto"],
-    plugins: [
-			resolve(),
-      commonjs()
-		],
+    external: [
+      "axios",
+      "crypto",
+      "request",
+      "util",
+      "events",
+      "stream",
+      "buffer",
+      "punycode",
+      "fs",
+      "path",
+      "querystring",
+      "child_process",
+      "os"
+    ],
+    plugins: [resolve(), json(), commonjs()],
     targets: [
-      { dest: pkg.main, format: "cjs" },
+      { dest: pkg.main, format: "cjs" }
       // { dest: pkg.module, format: "es" }
     ]
   }
