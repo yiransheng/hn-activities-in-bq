@@ -1,4 +1,5 @@
 import resolve from "rollup-plugin-node-resolve";
+import babel from "rollup-plugin-babel";
 import commonjs from "rollup-plugin-commonjs";
 import json from "rollup-plugin-json";
 import alias from "rollup-plugin-alias";
@@ -35,6 +36,9 @@ export default [
       // "google-service-account"
     ],
     plugins: [
+      babel({
+        exclude: "node_modules/**"
+      }),
       alias({
         "google-p12-pem": path.resolve(__dirname, "./empty-module.js")
       }),

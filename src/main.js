@@ -1,3 +1,5 @@
+import regeneratorRuntime from "regenerator-runtime";
+
 import zip from "lodash.zip";
 import shortid from "shortid";
 
@@ -7,6 +9,9 @@ import { computeEntryFromStoryPair, getRank } from "./stats";
 import { bqjob } from "./bqjob";
 
 const SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
+
+// so that rollup does not "optimize" away imported regeneratorRuntime
+global.regeneratorRuntime = regeneratorRuntime;
 
 async function fetchStats() {
   const taskId = shortid();
