@@ -1,115 +1,99 @@
-# Draft
+# HN Frontpage Activity Monitoring with Webtask.io and Google BigQuery
 
-## Metrics to CRON
+## What is this
 
-* Median age of frontpage stories (type: time interval)
-* Story points delta for top frontpage stories (type: int, unit: Nat)
-* Comment count delta for top frontpage stories (type: int, unit: Nat)
-  - by rank
+This project consists of three components:
 
-## Entity Def
-
-```
-{
-  task_id : uid,
-  story_id : int,
-  interval_begin : TIMESTAMP,
-  interval_end : TIMESTAMP,
-  story_rank_begin: int,
-  story_rank_end: int,
-  story_createdat: TIMESTAMP,
-  story_point_begin : int,
-  story_point_delta : int,
-  comment_count_begin: int,
-  comment_count_delta : int
-}
-```
+* [`webtask`](https://webtask.io/) cron job script (built using rollup.js) [./src](./src)
+  * Every hour (or determined by other CRON configurations) the script takes _two_ 15-seconds-apart snapshots of Hacker News frontpage statistics (top 25 stories and their rank, story point and comment count)
+  * [Streaming](https://cloud.google.com/bigquery/streaming-data-into-bigquery) results to a BigQuery table for later batch analysis
+* A`webtask` endpoint to serve last 24 hours worth of data from BigQuery [./serve](./serve)
+* Some visualization and analysis using Jupyter and python BigQuery client [./analyze](./analyze)
 
 
 
-## LESSON learned: _RTFM_
+## Deploying
 
-I was wondering how to `require` or `import` npm modules in my `webtask` script, as it was fairly obvious I would need libraries, particularly a BigQuery node client.
+1. Create a GCP [service account](https://cloud.google.com/compute/docs/access/service-accounts), with BigQuery access, download a JSON key for the account
 
+2. Create an empty BigQuery table with the scheme specified in [./src/bq-schema.json]()
 
+3. Create `webtask` secrets file with the following content:
 
-When reading through `webtask`'s documentation, I found the section on [pre-installed modules](https://webtask.io/docs/modules). And for some reason, I came to the conclusion that for anything outside the provided list - I would need to inline it into final script myself. And missed entirely the part about associating custom module with a webtask script. 
+   ```
+   gcloud=<content of json key>
+   projectId=<gcp project id>
+   datasetId=<bigquery dataset id>
+   tableId=<bigquery table id>
+   ```
 
+4. run `./deploy.sh`
 
+## Running Jupyter Notebook
 
-Thanks to this misconception, I was sent to a path of hunting dozens of npm packages and unconventional `rollup` sorcery. Lesson learned: read the *damn* manual. 
-
-
-
-Packaging library and application code into a single bundle is a very common task in client-side javascript, accomplished by great tools such as `webpack`, `browserify` and `rollup`. I picked `rollup` as it has the nicest output in terms or readability: every library export is flattened into a single scope. 
-
-
-
-Little did I know, how bloated even the simplest npm libraries truly are!
-
-## Journey to a Small Bundle
-
-The official node client for BigQuery is `@google-clould/bigquery`, and it is something I have worked with in the past. Unfortunately when bundled by `rollup` its source (and sources of its dependencies) bloats my `dist/index.js` to an enormous 50k lines. The bundle exceeds `webtask`'s file size limit by a wild margin.
-
-
-
-Of course, after checking [here](https://tehsis.github.io/webtaskio-canirequire/), this `@google-clould/bigquery` is not included in `webtask`'s default module libraries. Therefore, I cannot simply tell `rollup` to treat `@google-clould/bigquery` as an external dependency and exclude it from the final output. However, there _still_ is an angle of attack: dependencies of the library and their dependencies. For starter, `@google-clould/bigquery` depends on `@google-clould/common` which depends on a big list of nodejs stream related libs such as:
-
-* `stream`
-* `concat-stream`
-* `events`
-* `duplexify`
-* ...
-
-Many of these libraries are included on `webtask`, and I could safely mark them as "external". So I dove into `node_modules` and started cross-referencing the dependency graph of `@google-clould/bigquery` and `webtask`. Unfortunately, even after marking all available modules as "external" remaining bundle was still enormous (I even tried to minify it, the final version was still 10 times the size limit). At this time, I'd already wasted a few hours, it was quite frustrating to hit a dead end.
-
-
-
-My next step was not to use the _official_ BigQuery client. There are a number of leaner unoffical client libraries on npm, unfortunately none of them supports `tabledata.insertAll` api (which is a relatively new feature from BigQuery). I am left with the choice of rolling my own. 
-
-
-
-Talking to BigQuery (or most google cloud service) programmable involves three steps:
-
-1. Create a Service Account, and generate a JSON key
-2. Use the private key and make an OAuth request to google with correct [scopes]()
-3. Add OAuth token to subsequent http api calls as `Authorization` header
-
-Step 2 is infeasible to do by hand - as a lot intricacies are involved with respect to both OAuth and Google's token signing process. I would still need a library and bundle it into my final `webtask` script. After trying many options, I finally settled on `google-service-account` (https://github.com/stephenplusplus/google-service-account).
-
-
-
-Once included this library and marking some of its dependencies as "external" (eg. `request`), I was excited to run `npm run build`. Final file size: about 300k - very close, yet still not ready. Further digging reveals most of the bloat comes from `gtoken` library, which has the following `package.json`:
+Configure the following environment variables:
 
 ```
-"dependencies": {
-  "google-p12-pem": "^0.1.0",
-  "jws": "^3.0.0",
-  "mime": "^1.2.11",  // provided by webtask
-  "request": "^2.72.0"  // provied by webtask
-}
+export BQ_PRIVATE_KEY="/path/to/json_key";
+export BQ_PROJECT_ID=<project id>
+export BQ_DATASET_ID=<dataset id>
+export BQ_TABLE_ID=<table id>
+```
+
+Start jupyter server:
+
+```
+jupyter notebook ./analyze
+```
+
+## hnstats_collect: a webtask CRON job
+
+To generate webtask script, run:
+
+```
+npm run build
+```
+
+This will bundle all source code in [./src]() and necessary library dependencies into a single javascript file as `dist/index.js`, in addition `babel` is used to transpile ES6+ code to ES5 and common js module format. Certain dependencies are skipped if they are provided by `webtask` run time. Such as `request`, `stream`, `axios` and `crypto`. For a detailed list refer to `rollup.config.js`. 
+
+
+
+To schedule a cron job running the following after `webtask` cli is installed:
+
+```
+# run every 30 minitues
+wt cron 30m ./dist/index.js --name "hnstats_collect" --secrets-file <path to secrets file>
 ```
 
 
 
-Among these four, `google-p12-pem` is the biggest offender. Based on its name it has something to do with Google's P12 key (legacy bq credential). Since I am using JSON key, I suspected this module is entirely unnecessary. Reading the source of `gtoken` confirmed my suspicion. Unfortunately as `gtoken` is a commonjs package, `rollup` was not able to do it magic and tree-shake away `google-p12-pem`. Time for some manual intervention. 
+### Code Overview
+
+The core logic of data fetching is defined in `src/main.js` as an `async` function `fetchStats`. It fetches top 25 stories (filtering out `type=job` entries) using [HackerNews api](https://github.com/HackerNews/API). Then the script waits 15 seconds (initial plan was wait 1-5 minutes, unfortunately this will cause `webtask` runtime timeout error). Afterwards the stats of the _same_ 25 stories are refetched, with deltas in **rank**, **story points** and **comment count** computed. Finally the two set of entries are merged and pushed to BigQuery.
 
 
 
-A few google searches later, I found the perfect solution: [rollup-plugin-alias](https://www.npmjs.com/package/rollup-plugin-alias). By adding the following to my `rollup.config.js`, I was able to replace the exports of `google-p12-pem` with an empty object:
+### Challenges in Implementation
+
+The most difficult part was to get `dist/index.js` fit under `webtask`'s file size limit (12280 bytes). I had a misconception about webtask, I thought any external npm dependencies has be inlined and bundled into a single file if they are not provided by webtask.
+
+
+
+Official BigQuery client `@google-cloud/bigquery` has an enormous file size when bundled making it infeasible to use. I had to create a custom BigQuery client implementation (supporting only a single api I needed `table.insertAll`). Underlying authorization process (OAuth handshake and requesting correct google cloud scopes) is handled by `google-service-account` npm package - which depends on `gtoken`. 
+
+Unfortunately, when inlined, `gtoken` is still to big for `webtask`'s task - due to one of its dependencies `google-p12-pem`. To support full google clould api auth, `gtoken` needs to work with legacy p12 key. However, for my use case (using Google Service Account JSON key), this functionality is not needed. I finally solved this problem by using `rollup-plugin-alias`, and alias the `google-p12-pem` package to an empty module.
+
+
+
+Overall this was a "frustratingly fun" process, hinting at some tradeoffs a "serverless" architecture like `webtask` tends to face.
+
+
+
+## hnstats_serve: a webtask endpoint
+
+Note: I have not got this part working yet, `webtask` currently reports the following error even though said dependency was configured correctly in [./serve/package.json]():
 
 ```
-      alias({
-        "google-p12-pem": path.resolve(__dirname, "./empty-module.js")
-      })
+Error: ENOENT: no such file or directory, symlink '/data/_verquire/@google-cloud/bigquery/0.9.6/node_modules/@google-cloud/bigquery' -> '/data/io/f5a1dce3d96843738a4593cde3f2bf92/node_modules/@google-cloud/bigquery
 ```
 
-Contents of `empty-module.js`:
-
-```
-module.exports = {};
-```
-
-
-
-With that, my bundle was shrunk to 86kb. Success!
