@@ -4,6 +4,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var crypto = _interopDefault(require('crypto'));
 var axios = _interopDefault(require('axios'));
+var bq = _interopDefault(require('@google-cloud/bigquery'));
 
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -383,7 +384,7 @@ function isObjectLike(value) {
   return !!value && typeof value == 'object';
 }
 
-var index$1 = zip;
+var index = zip;
 
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
@@ -610,7 +611,7 @@ var isValid = isShortId;
 
 var clusterWorkerId = parseInt(process.env.NODE_UNIQUE_ID || 0, 10);
 
-var index$3 = createCommonjsModule(function (module) {
+var index$2 = createCommonjsModule(function (module) {
 'use strict';
 
 
@@ -678,7 +679,7 @@ module.exports.decode = decode_1;
 module.exports.isValid = isValid;
 });
 
-var index$2 = index$3;
+var index$1 = index$2;
 
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -843,10 +844,46 @@ class HNApiClient {
   }
 }
 
+var config = {
+  projectId : "hnactivity",
+  datasetId : "hnstats",
+  tableId : "stats"
+};
+
+function bqjob(rows) {
+  const { projectId, datasetId, tableId } = config;
+  const table = bq({
+    projectId
+  })
+    .dataset(datasetId)
+    .table(tableId);
+
+  return table.insert(rows, {
+    load: {
+      autodetect: true,
+      createDisposition: "CREATE_IF_NEEDED",
+      writeDisposition: "WRITE_APPEND",
+      destinationTable: {
+        projectId: projectId,
+        datasetId: datasetId,
+        tableId: tableId
+      },
+      sourceFormat: "NEWLINE_DELIMITED_JSON"
+    },
+    ignoreUnknownValues: true
+  });
+}
+
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
-async function task() {
-  const taskId = index$2();
+module.exports = function(ctx, cb) {
+  task().then(() => {
+    cb(null, { success: true });
+  });
+};
+
+async function fetchStats() {
+  const taskId = index$1();
   const client = new HNApiClient();
   const beginTimestamp = new Date();
 
@@ -873,10 +910,17 @@ async function task() {
       rank: getRank(topIdsAfter, story.id)
     };
   });
-  const entries = index$1(beforeEntries, afterEntries).map(([before, after]) =>
+  const entries = index(beforeEntries, afterEntries).map(([before, after]) =>
     Object.assign(computeEntryFromStoryPair(before, after), { task_id: taskId })
   );
   return entries;
 }
 
-task().then(console.log.bind(console));
+async function task() {
+  try {
+    await fetchStats().then(bqjob);
+    console.log("Submited to BigQuery");
+  } catch (err) {
+    console.error("Task failed, reason: ", err);
+  }
+}

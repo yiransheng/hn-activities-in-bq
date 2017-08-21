@@ -8,11 +8,13 @@ import { bqjob } from "./bqjob";
 
 const SAMPLE_INTERVAL = 30 * 1000; // 30 seconds
 
-module.exports = function(ctx, cb) {
-  task().then(() => {
-    cb(null, { success: true });
-  });
-};
+/*
+ * module.exports = function(ctx, cb) {
+ *   task().then(() => {
+ *     cb(null, { success: true });
+ *   });
+ * };
+ */
 
 async function fetchStats() {
   const taskId = shortid();
