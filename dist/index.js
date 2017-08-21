@@ -3055,7 +3055,7 @@ function bqjob(credentials) {
   };
 }
 
-var SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
+var SAMPLE_INTERVAL = 15 * 1000; // 15 seconds
 
 // so that rollup does not "optimize" away imported regeneratorRuntime
 global.regeneratorRuntime = runtimeModule;

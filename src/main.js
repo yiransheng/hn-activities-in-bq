@@ -8,7 +8,7 @@ import { sleep } from "./utils";
 import { computeEntryFromStoryPair, getRank } from "./stats";
 import { bqjob } from "./bqjob";
 
-const SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
+const SAMPLE_INTERVAL = 15 * 1000; // 15 seconds
 
 // so that rollup does not "optimize" away imported regeneratorRuntime
 global.regeneratorRuntime = regeneratorRuntime;
