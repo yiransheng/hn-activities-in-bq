@@ -7,7 +7,7 @@
     "test": "npm test",
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "webtask-cron": "npm run build && wt cron ./dist/index.js --secret-file ./bq-key.txt"
+    "cron" : "wt cron schedule 20m ./dist/index.js --secrets-file ./bqkey.txt --name hnstats"
   },
   "author": "Yiran Sheng",
   "license": "MIT",

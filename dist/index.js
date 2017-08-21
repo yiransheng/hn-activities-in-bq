@@ -3057,6 +3057,7 @@ function bqjob(credentials) {
 
 var SAMPLE_INTERVAL = 60 * 1000; // 60 seconds
 
+// so that rollup does not "optimize" away imported regeneratorRuntime
 global.regeneratorRuntime = runtimeModule;
 
 function fetchStats() {
