@@ -12,8 +12,10 @@ function query(projectId, datasetId, tableId, credentials) {
       *
     FROM
       \`${projectId}.${datasetId}.${tableId}\`
+    WHERE
+      \`interval_begin\` >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
     LIMIT
-      10000;
+      1000;
   `;
   const queryConfig = {
     query: query,
@@ -60,7 +62,7 @@ module.exports = function(context, callback) {
   const tableId = context.secrets.tableId;
   query(projectId, datasetId, tableId, bqCreds)
     .then(results => {
-      callback(null, result);
+      callback(null, results);
     })
     .catch(err => callback(err, null));
 };
