@@ -27,7 +27,9 @@ This project consists of three components:
    tableId=<bigquery table id>
    ```
 
-4. run `./deploy.sh`
+4. Set ENV variable `WT_SECRECTS_FILE` to the path of above file
+
+5. run `./deploy.sh`
 
 ## Running Jupyter Notebook
 
